@@ -1,33 +1,26 @@
 import type { CollectionConfig } from "payload";
 import { anyone, signedIn } from "../access";
-import { revalidateCollection } from "../hooks/revalidate";
+import { revalidateSite } from "../hooks/revalidate";
 
 export const Faqs: CollectionConfig = {
   slug: "faqs",
   labels: { singular: "FAQ", plural: "FAQs" },
-  admin: { useAsTitle: "question", defaultColumns: ["question", "category", "order"] },
+  admin: {
+    group: "Website",
+    useAsTitle: "question",
+    defaultColumns: ["question", "order", "showOnHome"],
+    description: "Shown on the About page. Ticked ones also appear on the home page.",
+  },
   access: { read: anyone, create: signedIn, update: signedIn, delete: signedIn },
   defaultSort: "order",
-  hooks: revalidateCollection(() => ["/", "/about"]),
+  hooks: revalidateSite,
   fields: [
     { name: "question", type: "text", required: true },
     { name: "answer", type: "textarea", required: true },
     {
       type: "row",
       fields: [
-        {
-          name: "category",
-          type: "select",
-          required: true,
-          defaultValue: "general",
-          options: [
-            { label: "General", value: "general" },
-            { label: "Safety", value: "safety" },
-            { label: "Booking", value: "booking" },
-            { label: "Olympiad", value: "olympiad" },
-          ],
-        },
-        { name: "order", type: "number", defaultValue: 0 },
+        { name: "order", type: "number", defaultValue: 0, admin: { description: "Lower numbers show first." } },
         { name: "showOnHome", type: "checkbox", defaultValue: false },
       ],
     },

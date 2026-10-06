@@ -1,20 +1,45 @@
 import type { Field, GlobalConfig } from "payload";
-import { signedIn, anyone } from "../access";
-import { seoField } from "../fields";
-import { revalidateGlobal } from "../hooks/revalidate";
+import { publishedOrSignedIn, signedIn } from "../access";
+import { seoField, siteLink } from "../fields";
+import { revalidateSiteGlobal } from "../hooks/revalidate";
+import { sitePreview } from "../preview";
 
-const sectionHeading = (defaults: { eyebrow: string; title: string; intro?: string }): Field[] => [
-  { name: "eyebrow", type: "text", required: true, defaultValue: defaults.eyebrow },
-  { name: "title", type: "text", required: true, defaultValue: defaults.title },
-  { name: "intro", type: "textarea", defaultValue: defaults.intro },
+const sectionHeading = (withIntro = true): Field[] => [
+  {
+    type: "row",
+    fields: [
+      { name: "eyebrow", type: "text", required: true },
+      { name: "title", type: "text", required: true },
+    ],
+  },
+  ...(withIntro ? [{ name: "intro", type: "textarea" } as Field] : []),
 ];
+
+const points = (maxRows: number): Field => ({
+  name: "points",
+  type: "array",
+  maxRows,
+  fields: [
+    { name: "title", type: "text", required: true },
+    { name: "text", type: "textarea", required: true },
+  ],
+});
+
+const photo = (name = "image", description?: string): Field => ({
+  name,
+  type: "upload",
+  relationTo: "media",
+  required: true,
+  admin: description ? { description } : undefined,
+});
 
 export const HomePage: GlobalConfig = {
   slug: "home-page",
   label: "Home page",
-  access: { read: anyone, update: signedIn },
+  admin: { group: "Website", preview: sitePreview(() => "/") },
+  access: { read: publishedOrSignedIn, update: signedIn },
   versions: { drafts: true, max: 20 },
-  hooks: { afterChange: revalidateGlobal(["/"]) },
+  hooks: revalidateSiteGlobal,
   fields: [
     {
       type: "tabs",
@@ -23,40 +48,28 @@ export const HomePage: GlobalConfig = {
           label: "Hero",
           name: "hero",
           fields: [
-            { name: "headingLines", type: "text", hasMany: true, required: true, admin: { description: "Each entry is one line; the last line is highlighted." } },
+            {
+              name: "headingLines",
+              type: "text",
+              hasMany: true,
+              required: true,
+              admin: { description: "Each entry is one line; the last line is highlighted in yellow." },
+            },
             { name: "intro", type: "textarea", required: true },
-            { name: "image", type: "upload", relationTo: "media", required: true },
-            { name: "highlights", type: "text", hasMany: true, admin: { description: "Small starred facts under the buttons." } },
+            photo("image", "Wide landscape photo behind the heading."),
+            { name: "highlights", type: "text", hasMany: true, admin: { description: "Small starred facts under the button." } },
           ],
         },
         {
           label: "Who we are",
           name: "story",
-          fields: [
-            ...sectionHeading({ eyebrow: "Who we are", title: "A nature club, not a tour company" }),
-            { name: "body", type: "textarea", required: true },
-            { name: "image", type: "upload", relationTo: "media", required: true },
-            { name: "videoUrl", type: "text", admin: { description: "YouTube link. Empty shows “Video coming soon”." } },
-            {
-              name: "points",
-              type: "array",
-              maxRows: 6,
-              fields: [
-                { name: "title", type: "text", required: true },
-                { name: "text", type: "textarea", required: true },
-              ],
-            },
-          ],
+          fields: [...sectionHeading(false), { name: "body", type: "textarea", required: true }, photo(), points(6)],
         },
         {
           label: "Plan by holiday",
           name: "holidays",
           fields: [
-            ...sectionHeading({
-              eyebrow: "Plan by holiday",
-              title: "A trip for every school break",
-              intro: "Diwali, Christmas, summer vacation or just a weekend: here is what runs when.",
-            }),
+            ...sectionHeading(),
             {
               name: "items",
               type: "array",
@@ -68,15 +81,33 @@ export const HomePage: GlobalConfig = {
                     { name: "title", type: "text", required: true },
                   ],
                 },
-                { name: "highlights", type: "text", hasMany: true },
+                { name: "highlights", type: "text", hasMany: true, admin: { description: "Trip names to mention." } },
                 {
                   type: "row",
                   fields: [
-                    { name: "tripCount", type: "number", min: 0 },
-                    { name: "link", type: "text", required: true, admin: { description: "e.g. /trips?month=nov" } },
+                    { name: "tripCount", type: "number", required: true, min: 0 },
+                    { name: "link", type: "text", required: true, validate: siteLink, admin: { description: "e.g. /trips?month=nov" } },
                   ],
                 },
-                { name: "image", type: "upload", relationTo: "media", required: true },
+                photo(),
+              ],
+            },
+          ],
+        },
+        {
+          label: "Destinations",
+          name: "destinations",
+          fields: [
+            ...sectionHeading(),
+            {
+              name: "regionImages",
+              type: "group",
+              admin: { description: "Also used on the Destinations page." },
+              fields: [
+                {
+                  type: "row",
+                  fields: [photo("gujarat"), photo("acrossIndia"), photo("northEast"), photo("outsideIndia")],
+                },
               ],
             },
           ],
@@ -85,7 +116,7 @@ export const HomePage: GlobalConfig = {
           label: "Audiences",
           name: "audiences",
           fields: [
-            ...sectionHeading({ eyebrow: "Who travels with us", title: "Your group. Your kind of trip." }),
+            ...sectionHeading(false),
             {
               name: "items",
               type: "array",
@@ -93,47 +124,34 @@ export const HomePage: GlobalConfig = {
               fields: [
                 { name: "title", type: "text", required: true },
                 { name: "description", type: "textarea", required: true },
-                { name: "link", type: "text", required: true },
-                { name: "image", type: "upload", relationTo: "media", required: true },
+                { name: "link", type: "text", required: true, validate: siteLink, admin: { description: "e.g. /group-trips#schools" } },
+                photo(),
               ],
             },
-            { name: "teacherNote", type: "text" },
+            { name: "teacherNote", type: "text", admin: { description: "Shown after “Teachers:” below the cards." } },
           ],
         },
         {
           label: "Why CNA",
           name: "why",
           fields: [
-            ...sectionHeading({ eyebrow: "Why CNA", title: "Nearly 30 years of getting people home happy" }),
-            { name: "image", type: "upload", relationTo: "media", required: true },
-            {
-              name: "points",
-              type: "array",
-              maxRows: 6,
-              fields: [
-                { name: "title", type: "text", required: true },
-                { name: "text", type: "textarea", required: true },
-              ],
-            },
+            ...sectionHeading(false),
+            photo(),
+            { name: "imageLabel", type: "text", admin: { description: "Small label on the photo, e.g. Rock climbing" } },
+            points(6),
           ],
         },
         {
           label: "Photo strip",
           name: "gallery",
           fields: [
-            ...sectionHeading({
-              eyebrow: "From the trail",
-              title: "Moments from our trips",
-              intro: "Real moments from CNA camps: campfires, rafting, climbing and the friends you make. Hover to pause.",
-            }),
+            ...sectionHeading(),
             {
               name: "photos",
               type: "array",
               minRows: 4,
-              fields: [
-                { name: "image", type: "upload", relationTo: "media", required: true },
-                { name: "caption", type: "text", required: true },
-              ],
+              admin: { description: "Scrolling strip on the home page; also “CNA moments” on the Gallery page." },
+              fields: [photo(), { name: "caption", type: "text", required: true }],
             },
           ],
         },

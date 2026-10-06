@@ -22,12 +22,8 @@ export const monthOptions = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "a
   value: m,
 }));
 
-export const audienceOptions = [
-  { label: "Solo travellers", value: "solo" },
-  { label: "School groups", value: "school" },
-  { label: "College & friends", value: "college" },
-  { label: "Families", value: "family" },
-  { label: "Girls-only groups", value: "girls" },
-  { label: "Corporate teams", value: "corporate" },
-  { label: "Teachers, NGOs & clubs", value: "ngo" },
+export const campusOptions = [
+  { label: "Manali Campus (Vashisht)", value: "manali" },
+  { label: "Bet Dwarka Campus", value: "dwarka" },
+  { label: "Hingolgadh Camp", value: "hingolgadh" },
 ];

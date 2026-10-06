@@ -1,16 +1,22 @@
 import type { CollectionConfig } from "payload";
 import { publishedOrSignedIn, signedIn } from "../access";
 import { seoField, slugField } from "../fields";
-import { revalidateCollection } from "../hooks/revalidate";
+import { revalidateSite } from "../hooks/revalidate";
+import { sitePreview } from "../preview";
 
 export const Posts: CollectionConfig = {
   slug: "posts",
   labels: { singular: "Blog post", plural: "Blog posts" },
-  admin: { useAsTitle: "title", defaultColumns: ["title", "publishedAt", "_status"] },
+  admin: {
+    group: "Website",
+    useAsTitle: "title",
+    defaultColumns: ["title", "publishedAt", "_status"],
+    preview: sitePreview((doc) => `/blog/${doc.slug}`),
+  },
   access: { read: publishedOrSignedIn, create: signedIn, update: signedIn, delete: signedIn },
-  versions: { drafts: { autosave: { interval: 2000 } }, maxPerDoc: 30 },
+  versions: { drafts: true, maxPerDoc: 30 },
   defaultSort: "-publishedAt",
-  hooks: revalidateCollection<{ slug?: string }>((doc) => ["/blog", `/blog/${doc.slug}`]),
+  hooks: revalidateSite,
   fields: [
     { name: "title", type: "text", required: true },
     { name: "excerpt", type: "textarea", required: true, maxLength: 240 },

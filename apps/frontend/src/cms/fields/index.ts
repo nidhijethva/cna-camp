@@ -38,9 +38,25 @@ export const seoField: Field = {
   ],
 };
 
+/** Optional full web address (https://…). Blocks other schemes such as javascript:. */
+export const httpUrl = (value: unknown) => {
+  if (value == null || value === "") return true;
+  try {
+    const { protocol } = new URL(String(value));
+    return protocol === "https:" || protocol === "http:" || "Enter a full web address starting with https://";
+  } catch {
+    return "Enter a full web address starting with https://";
+  }
+};
+
+/** Required link to a page on this site, e.g. /trips?month=nov or /group-trips#schools. */
+export const siteLink = (value: unknown) =>
+  (typeof value === "string" && /^\/(?!\/)\S*$/.test(value)) || "Enter a page on this site starting with /, e.g. /trips";
+
 /** Marks placeholder content so the site can label it and editors can find it. */
 export const sampleField: Field = {
   name: "isSample",
+  label: "Sample",
   type: "checkbox",
   defaultValue: false,
   admin: { position: "sidebar", description: "Sample/placeholder content, labelled on the site until replaced." },

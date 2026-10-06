@@ -143,7 +143,7 @@ export interface Trip {
   id: string;
   name: string;
   /**
-   * One or two lines for cards.
+   * One or two lines for trip cards.
    */
   summary: string;
   region: 'gujarat' | 'across-india' | 'north-east' | 'outside-india';
@@ -152,12 +152,15 @@ export interface Trip {
    */
   location: string;
   type: 'trek' | 'camp' | 'nature-trail';
-  difficulty?: ('easy' | 'moderate' | 'challenging') | null;
+  difficulty: 'easy' | 'moderate' | 'challenging';
   days: number;
   /**
    * 0 shows as “Day trip”.
    */
   nights: number;
+  /**
+   * Leave empty for low-altitude trips.
+   */
   altitudeM?: number | null;
   /**
    * Empty shows “On request”.
@@ -166,39 +169,28 @@ export interface Trip {
   /**
    * Departure city, e.g. Ahmedabad
    */
-  startsFrom?: string | null;
+  startsFrom: string;
   /**
    * Months this trip runs.
    */
-  months?: ('jan' | 'feb' | 'mar' | 'apr' | 'may' | 'jun' | 'jul' | 'aug' | 'sep' | 'oct' | 'nov' | 'dec')[] | null;
-  suitableFor?: ('solo' | 'school' | 'college' | 'family' | 'girls' | 'corporate' | 'ngo')[] | null;
+  months: ('jan' | 'feb' | 'mar' | 'apr' | 'may' | 'jun' | 'jul' | 'aug' | 'sep' | 'oct' | 'nov' | 'dec')[];
   activities?:
     | {
         text: string;
         id?: string | null;
       }[]
     | null;
-  overview?: {
-    root: {
-      type: string;
-      children: {
-        type: any;
-        version: number;
-        [k: string]: unknown;
-      }[];
-      direction: ('ltr' | 'rtl') | null;
-      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
-      indent: number;
-      version: number;
-    };
-    [k: string]: unknown;
-  } | null;
-  highlights?:
-    | {
-        text: string;
-        id?: string | null;
-      }[]
-    | null;
+  /**
+   * Shows “Where you stay” with the campus details.
+   */
+  campus?: ('manali' | 'dwarka' | 'hingolgadh') | null;
+  /**
+   * A short paragraph about the place. Empty uses the summary.
+   */
+  overview?: string | null;
+  /**
+   * Empty shows a sample plan sized to the trip length.
+   */
   itinerary?:
     | {
         title: string;
@@ -206,6 +198,14 @@ export interface Trip {
         id?: string | null;
       }[]
     | null;
+  /**
+   * Tick when the day-by-day plan is CNA's real schedule (otherwise it is labelled as a sample).
+   */
+  itineraryConfirmed?: boolean | null;
+  /**
+   * Empty says the group travels together from the start city.
+   */
+  howToReach?: string | null;
   included?:
     | {
         text: string;
@@ -224,21 +224,6 @@ export interface Trip {
         id?: string | null;
       }[]
     | null;
-  howToReach?: {
-    root: {
-      type: string;
-      children: {
-        type: any;
-        version: number;
-        [k: string]: unknown;
-      }[];
-      direction: ('ltr' | 'rtl') | null;
-      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
-      indent: number;
-      version: number;
-    };
-    [k: string]: unknown;
-  } | null;
   faqs?:
     | {
         question: string;
@@ -246,7 +231,13 @@ export interface Trip {
         id?: string | null;
       }[]
     | null;
-  heroImage: string | Media;
+  /**
+   * Main photo. Empty shows “Photo coming soon”.
+   */
+  heroImage?: (string | null) | Media;
+  /**
+   * 3 or more photos show a gallery on the trip page and an album on the Gallery page.
+   */
   gallery?: (string | Media)[] | null;
   /**
    * Search engine and social sharing. Empty fields fall back to the page content.
@@ -261,7 +252,11 @@ export interface Trip {
    */
   slug: string;
   /**
-   * Show in “Popular trips”.
+   * Lower numbers show first in trip lists.
+   */
+  order: number;
+  /**
+   * Show in “Popular trips” on the home page.
    */
   featured?: boolean | null;
   /**
@@ -302,15 +297,7 @@ export interface Media {
   focalX?: number | null;
   focalY?: number | null;
   sizes?: {
-    card?: {
-      url?: string | null;
-      width?: number | null;
-      height?: number | null;
-      mimeType?: string | null;
-      filesize?: number | null;
-      filename?: string | null;
-    };
-    hero?: {
+    thumbnail?: {
       url?: string | null;
       width?: number | null;
       height?: number | null;
@@ -321,6 +308,8 @@ export interface Media {
   };
 }
 /**
+ * Fixed departure dates. Past batches drop off the site automatically.
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "batches".
  */
@@ -328,17 +317,10 @@ export interface Batch {
   id: string;
   trip: string | Trip;
   startDate: string;
+  endDate: string;
   seatsLeft: number;
   /**
-   * Empty uses the trip's price.
-   */
-  price?: number | null;
-  /**
-   * Overrides the trip duration, e.g. “Day trip”.
-   */
-  durationLabel?: string | null;
-  /**
-   * e.g. “Diwali break”, “Girls-only batch”.
+   * Short tag, e.g. “Diwali break”, “Girls-only batch”.
    */
   note?: string | null;
   label?: string | null;
@@ -420,6 +402,8 @@ export interface User {
   collection: 'users';
 }
 /**
+ * The 3 most recent reviews with consent appear on the home page.
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "reviews".
  */
@@ -432,10 +416,9 @@ export interface Review {
   role: string;
   quote: string;
   rating: number;
-  trip?: (string | null) | Trip;
-  photo?: (string | null) | Media;
+  trip: string | Trip;
   /**
-   * The reviewer agreed to their name, words and photo appearing on the site.
+   * The reviewer agreed to their name and words appearing on the site. Only ticked reviews are shown.
    */
   consentGiven?: boolean | null;
   /**
@@ -446,6 +429,8 @@ export interface Review {
   createdAt: string;
 }
 /**
+ * Shown on the About page. Ticked ones also appear on the home page.
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "faqs".
  */
@@ -453,7 +438,9 @@ export interface Faq {
   id: string;
   question: string;
   answer: string;
-  category: 'general' | 'safety' | 'booking' | 'olympiad';
+  /**
+   * Lower numbers show first.
+   */
   order?: number | null;
   showOnHome?: boolean | null;
   updatedAt: string;
@@ -480,8 +467,11 @@ export interface Enquiry {
   month?: ('jan' | 'feb' | 'mar' | 'apr' | 'may' | 'jun' | 'jul' | 'aug' | 'sep' | 'oct' | 'nov' | 'dec') | null;
   group?: {
     organisation?: string | null;
-    audience?: ('solo' | 'school' | 'college' | 'family' | 'girls' | 'corporate' | 'ngo') | null;
-    days?: number | null;
+    /**
+     * Where to (empty = suggest for us).
+     */
+    region?: string | null;
+    days?: string | null;
     fromCity?: string | null;
     interests?: string[] | null;
   };
@@ -493,6 +483,7 @@ export interface Enquiry {
   meta?: {
     sourcePath?: string | null;
     consentAt?: string | null;
+    ipHash?: string | null;
   };
   updatedAt: string;
   createdAt: string;
@@ -612,20 +603,14 @@ export interface TripsSelect<T extends boolean = true> {
   priceFrom?: T;
   startsFrom?: T;
   months?: T;
-  suitableFor?: T;
   activities?:
     | T
     | {
         text?: T;
         id?: T;
       };
+  campus?: T;
   overview?: T;
-  highlights?:
-    | T
-    | {
-        text?: T;
-        id?: T;
-      };
   itinerary?:
     | T
     | {
@@ -633,6 +618,8 @@ export interface TripsSelect<T extends boolean = true> {
         body?: T;
         id?: T;
       };
+  itineraryConfirmed?: T;
+  howToReach?: T;
   included?:
     | T
     | {
@@ -651,7 +638,6 @@ export interface TripsSelect<T extends boolean = true> {
         text?: T;
         id?: T;
       };
-  howToReach?: T;
   faqs?:
     | T
     | {
@@ -669,6 +655,7 @@ export interface TripsSelect<T extends boolean = true> {
         image?: T;
       };
   slug?: T;
+  order?: T;
   featured?: T;
   isSample?: T;
   updatedAt?: T;
@@ -682,9 +669,8 @@ export interface TripsSelect<T extends boolean = true> {
 export interface BatchesSelect<T extends boolean = true> {
   trip?: T;
   startDate?: T;
+  endDate?: T;
   seatsLeft?: T;
-  price?: T;
-  durationLabel?: T;
   note?: T;
   label?: T;
   isSample?: T;
@@ -725,7 +711,6 @@ export interface ReviewsSelect<T extends boolean = true> {
   quote?: T;
   rating?: T;
   trip?: T;
-  photo?: T;
   consentGiven?: T;
   isSample?: T;
   updatedAt?: T;
@@ -738,7 +723,6 @@ export interface ReviewsSelect<T extends boolean = true> {
 export interface FaqsSelect<T extends boolean = true> {
   question?: T;
   answer?: T;
-  category?: T;
   order?: T;
   showOnHome?: T;
   updatedAt?: T;
@@ -766,17 +750,7 @@ export interface MediaSelect<T extends boolean = true> {
   sizes?:
     | T
     | {
-        card?:
-          | T
-          | {
-              url?: T;
-              width?: T;
-              height?: T;
-              mimeType?: T;
-              filesize?: T;
-              filename?: T;
-            };
-        hero?:
+        thumbnail?:
           | T
           | {
               url?: T;
@@ -807,7 +781,7 @@ export interface EnquiriesSelect<T extends boolean = true> {
     | T
     | {
         organisation?: T;
-        audience?: T;
+        region?: T;
         days?: T;
         fromCity?: T;
         interests?: T;
@@ -819,6 +793,7 @@ export interface EnquiriesSelect<T extends boolean = true> {
     | {
         sourcePath?: T;
         consentAt?: T;
+        ipHash?: T;
       };
   updatedAt?: T;
   createdAt?: T;
@@ -895,26 +870,24 @@ export interface HomePage {
   id: string;
   hero: {
     /**
-     * Each entry is one line; the last line is highlighted.
+     * Each entry is one line; the last line is highlighted in yellow.
      */
     headingLines: string[];
     intro: string;
+    /**
+     * Wide landscape photo behind the heading.
+     */
     image: string | Media;
     /**
-     * Small starred facts under the buttons.
+     * Small starred facts under the button.
      */
     highlights?: string[] | null;
   };
   story: {
     eyebrow: string;
     title: string;
-    intro?: string | null;
     body: string;
     image: string | Media;
-    /**
-     * YouTube link. Empty shows “Video coming soon”.
-     */
-    videoUrl?: string | null;
     points?:
       | {
           title: string;
@@ -934,8 +907,11 @@ export interface HomePage {
            */
           months: string;
           title: string;
+          /**
+           * Trip names to mention.
+           */
           highlights?: string[] | null;
-          tripCount?: number | null;
+          tripCount: number;
           /**
            * e.g. /trips?month=nov
            */
@@ -945,26 +921,48 @@ export interface HomePage {
         }[]
       | null;
   };
-  audiences: {
+  destinations: {
     eyebrow: string;
     title: string;
     intro?: string | null;
+    /**
+     * Also used on the Destinations page.
+     */
+    regionImages: {
+      gujarat: string | Media;
+      acrossIndia: string | Media;
+      northEast: string | Media;
+      outsideIndia: string | Media;
+    };
+  };
+  audiences: {
+    eyebrow: string;
+    title: string;
     items?:
       | {
           title: string;
           description: string;
+          /**
+           * e.g. /group-trips#schools
+           */
           link: string;
           image: string | Media;
           id?: string | null;
         }[]
       | null;
+    /**
+     * Shown after “Teachers:” below the cards.
+     */
     teacherNote?: string | null;
   };
   why: {
     eyebrow: string;
     title: string;
-    intro?: string | null;
     image: string | Media;
+    /**
+     * Small label on the photo, e.g. Rock climbing
+     */
+    imageLabel?: string | null;
     points?:
       | {
           title: string;
@@ -977,6 +975,9 @@ export interface HomePage {
     eyebrow: string;
     title: string;
     intro?: string | null;
+    /**
+     * Scrolling strip on the home page; also “CNA moments” on the Gallery page.
+     */
     photos?:
       | {
           image: string | Media;
@@ -998,44 +999,61 @@ export interface HomePage {
   createdAt?: string | null;
 }
 /**
+ * Contact details and numbers used across the whole site.
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "site-settings".
  */
 export interface SiteSetting {
   id: string;
   /**
-   * Displayed, e.g. +91 70463 61009
+   * As shown, e.g. +91 70463 61009
    */
   phone: string;
   /**
    * Digits with country code, e.g. 917046361009
    */
   whatsappNumber: string;
-  whatsappMessage?: string | null;
-  emails: string[];
-  address: string;
-  officeHours?: string | null;
+  /**
+   * Pre-filled message when someone taps WhatsApp.
+   */
+  whatsappMessage: string;
+  /**
+   * Main email for enquiries.
+   */
+  email: string;
+  /**
+   * Trust office email (Contact page).
+   */
+  trustEmail?: string | null;
+  address: {
+    street: string;
+    city: string;
+    state: string;
+    postalCode: string;
+  };
   /**
    * Google Maps link to the office.
    */
   mapUrl?: string | null;
   social?:
     | {
-        platform: 'instagram' | 'facebook' | 'youtube' | 'x' | 'linkedin';
+        platform: 'Instagram' | 'Facebook' | 'YouTube' | 'X' | 'LinkedIn';
         /**
-         * Leave empty to show the label without a link.
+         * Leave empty to show the name without a link.
          */
         url?: string | null;
         id?: string | null;
       }[]
     | null;
-  campersCount: string;
-  campsCount: string;
-  activitiesCount: number;
   /**
-   * Optional text for the top strip. Empty shows the default.
+   * e.g. 1,00,000+
    */
-  announcement?: string | null;
+  campersCount: string;
+  /**
+   * e.g. 1,000+
+   */
+  campsCount: string;
   updatedAt?: string | null;
   createdAt?: string | null;
 }
@@ -1057,10 +1075,8 @@ export interface HomePageSelect<T extends boolean = true> {
     | {
         eyebrow?: T;
         title?: T;
-        intro?: T;
         body?: T;
         image?: T;
-        videoUrl?: T;
         points?:
           | T
           | {
@@ -1087,12 +1103,26 @@ export interface HomePageSelect<T extends boolean = true> {
               id?: T;
             };
       };
-  audiences?:
+  destinations?:
     | T
     | {
         eyebrow?: T;
         title?: T;
         intro?: T;
+        regionImages?:
+          | T
+          | {
+              gujarat?: T;
+              acrossIndia?: T;
+              northEast?: T;
+              outsideIndia?: T;
+            };
+      };
+  audiences?:
+    | T
+    | {
+        eyebrow?: T;
+        title?: T;
         items?:
           | T
           | {
@@ -1109,8 +1139,8 @@ export interface HomePageSelect<T extends boolean = true> {
     | {
         eyebrow?: T;
         title?: T;
-        intro?: T;
         image?: T;
+        imageLabel?: T;
         points?:
           | T
           | {
@@ -1153,9 +1183,16 @@ export interface SiteSettingsSelect<T extends boolean = true> {
   phone?: T;
   whatsappNumber?: T;
   whatsappMessage?: T;
-  emails?: T;
-  address?: T;
-  officeHours?: T;
+  email?: T;
+  trustEmail?: T;
+  address?:
+    | T
+    | {
+        street?: T;
+        city?: T;
+        state?: T;
+        postalCode?: T;
+      };
   mapUrl?: T;
   social?:
     | T
@@ -1166,8 +1203,6 @@ export interface SiteSettingsSelect<T extends boolean = true> {
       };
   campersCount?: T;
   campsCount?: T;
-  activitiesCount?: T;
-  announcement?: T;
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;

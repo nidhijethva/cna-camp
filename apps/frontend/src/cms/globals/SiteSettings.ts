@@ -1,12 +1,14 @@
 import type { GlobalConfig } from "payload";
 import { anyone, signedIn } from "../access";
-import { revalidateGlobal } from "../hooks/revalidate";
+import { httpUrl } from "../fields";
+import { revalidateSiteGlobal } from "../hooks/revalidate";
 
 export const SiteSettings: GlobalConfig = {
   slug: "site-settings",
   label: "Site settings",
+  admin: { group: "Settings", description: "Contact details and numbers used across the whole site." },
   access: { read: anyone, update: signedIn },
-  hooks: { afterChange: revalidateGlobal(["/"]) },
+  hooks: revalidateSiteGlobal,
   fields: [
     {
       type: "tabs",
@@ -17,22 +19,40 @@ export const SiteSettings: GlobalConfig = {
             {
               type: "row",
               fields: [
-                { name: "phone", type: "text", required: true, admin: { description: "Displayed, e.g. +91 70463 61009" } },
-                { name: "whatsappNumber", type: "text", required: true, admin: { description: "Digits with country code, e.g. 917046361009" } },
+                { name: "phone", type: "text", required: true, admin: { description: "As shown, e.g. +91 70463 61009" } },
+                {
+                  name: "whatsappNumber",
+                  type: "text",
+                  required: true,
+                  validate: (value: unknown) => /^\d{11,15}$/.test(String(value ?? "")) || "Digits only, with country code, e.g. 917046361009",
+                  admin: { description: "Digits with country code, e.g. 917046361009" },
+                },
               ],
             },
-            { name: "whatsappMessage", type: "text", defaultValue: "Hi CNA, I want to know about your trips" },
+            { name: "whatsappMessage", type: "text", required: true, admin: { description: "Pre-filled message when someone taps WhatsApp." } },
             {
-              name: "emails",
-              type: "text",
-              hasMany: true,
-              required: true,
-              validate: (value: string[] | null | undefined) =>
-                (value ?? []).every((v) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) || "Enter valid email addresses.",
+              type: "row",
+              fields: [
+                { name: "email", type: "email", required: true, admin: { description: "Main email for enquiries." } },
+                { name: "trustEmail", type: "email", admin: { description: "Trust office email (Contact page)." } },
+              ],
             },
-            { name: "address", type: "textarea", required: true },
-            { name: "officeHours", type: "text" },
-            { name: "mapUrl", type: "text", admin: { description: "Google Maps link to the office." } },
+            {
+              name: "address",
+              type: "group",
+              fields: [
+                { name: "street", type: "text", required: true },
+                {
+                  type: "row",
+                  fields: [
+                    { name: "city", type: "text", required: true },
+                    { name: "state", type: "text", required: true },
+                    { name: "postalCode", type: "text", required: true },
+                  ],
+                },
+              ],
+            },
+            { name: "mapUrl", type: "text", validate: httpUrl, admin: { description: "Google Maps link to the office." } },
           ],
         },
         {
@@ -43,12 +63,17 @@ export const SiteSettings: GlobalConfig = {
               type: "array",
               fields: [
                 {
-                  name: "platform",
-                  type: "select",
-                  required: true,
-                  options: ["Instagram", "Facebook", "YouTube", "X", "LinkedIn"].map((p) => ({ label: p, value: p.toLowerCase() })),
+                  type: "row",
+                  fields: [
+                    {
+                      name: "platform",
+                      type: "select",
+                      required: true,
+                      options: ["Instagram", "Facebook", "YouTube", "X", "LinkedIn"].map((p) => ({ label: p, value: p })),
+                    },
+                    { name: "url", type: "text", validate: httpUrl, admin: { description: "Leave empty to show the name without a link." } },
+                  ],
                 },
-                { name: "url", type: "text", admin: { description: "Leave empty to show the label without a link." } },
               ],
             },
           ],
@@ -59,17 +84,10 @@ export const SiteSettings: GlobalConfig = {
             {
               type: "row",
               fields: [
-                { name: "campersCount", type: "text", required: true, defaultValue: "1,00,000+" },
-                { name: "campsCount", type: "text", required: true, defaultValue: "1,000+" },
-                { name: "activitiesCount", type: "number", required: true, defaultValue: 10 },
+                { name: "campersCount", type: "text", required: true, admin: { description: "e.g. 1,00,000+" } },
+                { name: "campsCount", type: "text", required: true, admin: { description: "e.g. 1,000+" } },
               ],
             },
-          ],
-        },
-        {
-          label: "Announcement",
-          fields: [
-            { name: "announcement", type: "text", admin: { description: "Optional text for the top strip. Empty shows the default." } },
           ],
         },
       ],

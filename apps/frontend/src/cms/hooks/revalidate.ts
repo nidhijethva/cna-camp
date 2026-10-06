@@ -1,34 +1,35 @@
 import { revalidatePath } from "next/cache";
 import type { CollectionAfterChangeHook, CollectionAfterDeleteHook, GlobalAfterChangeHook, PayloadRequest } from "payload";
 
-type PathsFor<T> = (doc: T) => string[];
-
-function revalidate(req: PayloadRequest, paths: string[]) {
-  // Seed scripts run outside Next.js, where there is no cache to revalidate.
+/**
+ * Content is shared across many pages (trip cards, enquiry dropdowns, contact details in the
+ * header and footer), so any change refreshes the whole site. It is small and edits are rare.
+ */
+function refreshSite(req: PayloadRequest) {
+  // Scripts such as the seed run outside Next.js, where there is no cache to refresh.
   if (req.context.skipRevalidate) return;
-  for (const path of new Set(paths)) {
-    req.payload.logger.info(`Revalidating ${path}`);
-    revalidatePath(path);
-  }
+  revalidatePath("/", "layout");
 }
 
-export function revalidateCollection<T extends Record<string, unknown>>(pathsFor: PathsFor<T>) {
-  const afterChange: CollectionAfterChangeHook = ({ doc, previousDoc, req }) => {
-    revalidate(req, [...pathsFor(doc as T), ...(previousDoc ? pathsFor(previousDoc as T) : [])]);
-    return doc;
-  };
-  const afterDelete: CollectionAfterDeleteHook = ({ doc, req }) => {
-    revalidate(req, pathsFor(doc as T));
-    return doc;
-  };
-  return { afterChange: [afterChange], afterDelete: [afterDelete] };
-}
+/** Draft saves never reach the site; publishing, unpublishing and plain saves do. */
+const isDraftOnly = (doc: { _status?: string }, previousDoc?: { _status?: string }) =>
+  doc._status === "draft" && previousDoc?._status !== "published";
 
-export function revalidateGlobal(paths: string[]): GlobalAfterChangeHook[] {
-  return [
-    ({ doc, req }) => {
-      revalidate(req, paths);
-      return doc;
-    },
-  ];
-}
+const afterChange: CollectionAfterChangeHook = ({ doc, previousDoc, req }) => {
+  if (!isDraftOnly(doc, previousDoc)) refreshSite(req);
+  return doc;
+};
+
+const afterDelete: CollectionAfterDeleteHook = ({ doc, req }) => {
+  refreshSite(req);
+  return doc;
+};
+
+const afterGlobalChange: GlobalAfterChangeHook = ({ doc, previousDoc, req }) => {
+  if (!isDraftOnly(doc, previousDoc)) refreshSite(req);
+  return doc;
+};
+
+export const revalidateSite = { afterChange: [afterChange], afterDelete: [afterDelete] };
+
+export const revalidateSiteGlobal = { afterChange: [afterGlobalChange] };

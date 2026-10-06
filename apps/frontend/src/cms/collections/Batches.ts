@@ -1,32 +1,47 @@
 import type { CollectionConfig } from "payload";
+import { ValidationError } from "payload";
 import { anyone, signedIn } from "../access";
 import { sampleField } from "../fields";
-import { revalidateCollection } from "../hooks/revalidate";
+import { revalidateSite } from "../hooks/revalidate";
+
+const dayOnly = { date: { pickerAppearance: "dayOnly", displayFormat: "d MMM yyyy" } } as const;
 
 export const Batches: CollectionConfig = {
   slug: "batches",
   labels: { singular: "Batch", plural: "Batches" },
-  admin: { useAsTitle: "label", defaultColumns: ["label", "startDate", "seatsLeft", "price"] },
+  admin: {
+    group: "Trips",
+    useAsTitle: "label",
+    defaultColumns: ["label", "startDate", "endDate", "seatsLeft", "note"],
+    description: "Fixed departure dates. Past batches drop off the site automatically.",
+  },
   access: { read: anyone, create: signedIn, update: signedIn, delete: signedIn },
   defaultSort: "startDate",
-  hooks: revalidateCollection(() => ["/", "/batches"]),
+  hooks: {
+    ...revalidateSite,
+    beforeValidate: [
+      ({ data, collection }) => {
+        if (data?.startDate && data.endDate && new Date(data.endDate) < new Date(data.startDate)) {
+          throw new ValidationError({
+            collection: collection.slug,
+            errors: [{ path: "endDate", message: "End date must be on or after the start date." }],
+          });
+        }
+        return data;
+      },
+    ],
+  },
   fields: [
     { name: "trip", type: "relationship", relationTo: "trips", required: true, index: true },
     {
       type: "row",
       fields: [
-        { name: "startDate", type: "date", required: true, index: true, admin: { date: { pickerAppearance: "dayOnly", displayFormat: "d MMM yyyy" } } },
+        { name: "startDate", type: "date", required: true, index: true, admin: dayOnly },
+        { name: "endDate", type: "date", required: true, admin: dayOnly },
         { name: "seatsLeft", type: "number", required: true, min: 0 },
-        { name: "price", label: "Price (₹)", type: "number", min: 0, admin: { description: "Empty uses the trip's price." } },
       ],
     },
-    {
-      type: "row",
-      fields: [
-        { name: "durationLabel", type: "text", admin: { description: "Overrides the trip duration, e.g. “Day trip”." } },
-        { name: "note", type: "text", admin: { description: "e.g. “Diwali break”, “Girls-only batch”." } },
-      ],
-    },
+    { name: "note", type: "text", admin: { description: "Short tag, e.g. “Diwali break”, “Girls-only batch”." } },
     {
       name: "label",
       type: "text",
@@ -35,7 +50,8 @@ export const Batches: CollectionConfig = {
         beforeChange: [
           async ({ data, req }) => {
             if (!data?.trip || !data.startDate) return data?.label;
-            const trip = await req.payload.findByID({ collection: "trips", id: data.trip, depth: 0, draft: true, req });
+            const id = typeof data.trip === "object" ? data.trip.id : data.trip;
+            const trip = await req.payload.findByID({ collection: "trips", id, depth: 0, draft: true, req });
             return `${trip.name} · ${String(data.startDate).slice(0, 10)}`;
           },
         ],

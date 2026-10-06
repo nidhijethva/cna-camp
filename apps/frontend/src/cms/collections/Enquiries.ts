@@ -1,13 +1,14 @@
 import type { CollectionConfig } from "payload";
 import { signedIn } from "../access";
-import { audienceOptions, monthOptions } from "../options";
+import { monthOptions } from "../options";
 
 /** Leads from the site forms. Created only by the server action (never via the public API). */
 export const Enquiries: CollectionConfig = {
   slug: "enquiries",
   admin: {
+    group: "Leads",
     useAsTitle: "name",
-    defaultColumns: ["name", "phone", "kind", "trip", "status", "createdAt"],
+    defaultColumns: ["name", "phone", "email", "kind", "trip", "status", "createdAt"],
     listSearchableFields: ["name", "phone", "email"],
   },
   // Personal data (DPDP Act): the signed-in admin only, never the public API.
@@ -70,10 +71,20 @@ export const Enquiries: CollectionConfig = {
       type: "group",
       admin: { condition: (data) => data.kind === "group" },
       fields: [
-        { name: "organisation", type: "text" },
-        { name: "audience", type: "select", options: audienceOptions },
-        { name: "days", type: "number", min: 1 },
-        { name: "fromCity", type: "text" },
+        {
+          type: "row",
+          fields: [
+            { name: "organisation", type: "text" },
+            { name: "region", type: "text", admin: { description: "Where to (empty = suggest for us)." } },
+          ],
+        },
+        {
+          type: "row",
+          fields: [
+            { name: "days", type: "text" },
+            { name: "fromCity", type: "text" },
+          ],
+        },
         { name: "interests", type: "text", hasMany: true },
       ],
     },
@@ -86,6 +97,8 @@ export const Enquiries: CollectionConfig = {
       fields: [
         { name: "sourcePath", type: "text" },
         { name: "consentAt", type: "date" },
+        // Keyed hash of the sender's IP, only for rate limiting; never the IP itself.
+        { name: "ipHash", type: "text", index: true, admin: { hidden: true } },
       ],
     },
   ],

@@ -1,0 +1,88 @@
+// CNA brand for the admin. Payload's styles live in `@layer payload-default`, so these
+// unlayered rules win without !important.
+
+:root {
+  // Warm neutrals from the website palette instead of flat grey. Payload maps this scale to
+  // its light theme as-is and reverses it for dark mode, so one scale serves both.
+  --color-base-0: #ffffff;
+  --color-base-50: #f7f5f1;
+  --color-base-100: #eeebe5;
+  --color-base-150: #e3dfd7;
+  --color-base-200: #d5d0c6;
+  --color-base-250: #c6c0b5;
+  --color-base-300: #b6b0a4;
+  --color-base-350: #a7a093;
+  --color-base-400: #979083;
+  --color-base-450: #878073;
+  --color-base-500: #787166;
+  --color-base-550: #69635a;
+  --color-base-600: #5b564e;
+  --color-base-650: #4e4a43;
+  --color-base-700: #423e38;
+  --color-base-750: #36332e;
+  --color-base-800: #2b2925;
+  --color-base-850: #22201d;
+  --color-base-900: #1a1916;
+  --color-base-950: #11100e;
+  --color-base-1000: #000000;
+
+  --cna-accent: #cf4510;
+  --cna-accent-hover: #b23a0b;
+  --cna-on-accent: #ffffff;
+}
+
+html[data-theme="dark"] {
+  // A touch brighter so orange keeps its contrast on the dark background.
+  --cna-accent: #e8541c;
+  --cna-accent-hover: #f0743f;
+}
+
+.btn--style-primary:not(.btn--disabled) {
+  --bg-color: var(--cna-accent);
+  --color: var(--cna-on-accent);
+  --hover-bg: var(--cna-accent-hover);
+  --hover-color: var(--cna-on-accent);
+}
+
+:focus-visible {
+  outline-color: var(--cna-accent);
+}
+
+input[type="checkbox"],
+input[type="radio"] {
+  accent-color: var(--cna-accent);
+}
+
+.cna-admin-logo {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  color: var(--theme-text);
+
+  img {
+    width: 56px;
+    height: 56px;
+  }
+
+  strong {
+    display: block;
+    font-size: 22px;
+    line-height: 1.1;
+  }
+
+  span {
+    display: block;
+    margin-top: 2px;
+    font-size: 13px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--theme-elevation-600);
+  }
+}
+
+.cna-admin-icon {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
