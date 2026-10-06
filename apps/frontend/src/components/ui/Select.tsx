@@ -15,6 +15,9 @@ interface SelectProps {
   /** Label of the "no choice" option (submits an empty value), e.g. "Anywhere". */
   emptyLabel?: string;
   defaultValue?: string;
+  /** Controlled mode: pass `value` and `onValueChange` together. */
+  value?: string;
+  onValueChange?: (value: string) => void;
   className?: string;
   "aria-invalid"?: boolean;
   "aria-describedby"?: string;
@@ -24,9 +27,17 @@ interface SelectProps {
 const EMPTY = "__empty__";
 
 /** Themed select that submits like a native one (via a hidden input) in GET forms and server actions. */
-export function Select({ name, options, emptyLabel, defaultValue = "", className = "", ...aria }: SelectProps) {
-  const initial = defaultValue || (emptyLabel ? EMPTY : (options[0]?.value ?? ""));
-  const [value, setValue] = useState(initial);
+export function Select({ name, options, emptyLabel, defaultValue = "", value: controlled, onValueChange, className = "", ...aria }: SelectProps) {
+  const toInternal = (v: string) => v || (emptyLabel ? EMPTY : (options[0]?.value ?? ""));
+  const [uncontrolled, setUncontrolled] = useState(toInternal(defaultValue));
+  const value = controlled === undefined ? uncontrolled : toInternal(controlled);
+  const setValue = (v: string) => {
+    // Radix's hidden native <select> reports "" when a value is set before its options mount;
+    // a real "no choice" pick arrives as EMPTY, so a raw "" is never a user action.
+    if (v === "") return;
+    if (controlled === undefined) setUncontrolled(v);
+    onValueChange?.(v === EMPTY ? "" : v);
+  };
   const items = emptyLabel ? [{ value: EMPTY, label: emptyLabel }, ...options] : options;
 
   return (

@@ -1,8 +1,11 @@
 import Image from "next/image";
 import Link from "next/link";
 import { footerNav, site } from "@/content/site";
+import { getPosts, getSiteSettings } from "@/lib/content";
 
-export function SiteFooter() {
+export async function SiteFooter() {
+  const [contact, posts] = await Promise.all([getSiteSettings(), getPosts()]);
+  const companyLinks = posts.length ? [...footerNav.company, { label: "Blog", href: "/blog" }] : footerNav.company;
   return (
     <footer className="mt-24 bg-dark text-light">
       <div className="wrap grid gap-10 py-16 md:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_1.2fr]">
@@ -18,14 +21,14 @@ export function SiteFooter() {
           <p className="mt-5 max-w-sm text-light/70">
             Treks, camps and outdoor learning from Rajkot since 1997. Backed by {site.trust.name}.
           </p>
-          <div className="mt-6 flex gap-2">
-            {site.social.map((s) =>
+          <div className="mt-6 flex gap-5">
+            {contact.social.map((s) =>
               s.href ? (
-                <a key={s.label} href={s.href} className="tag py-2 text-light/80 hover:text-secondary lg:py-1" rel="noopener" target="_blank">
+                <a key={s.label} href={s.href} className="py-2 font-semibold text-light/85 hover:text-secondary lg:py-0" rel="noopener" target="_blank">
                   {s.label}
                 </a>
               ) : (
-                <span key={s.label} className="tag py-2 text-light/50 lg:py-1">
+                <span key={s.label} className="py-2 text-light/50 lg:py-0">
                   {s.label}
                 </span>
               ),
@@ -34,27 +37,27 @@ export function SiteFooter() {
         </div>
 
         <FooterLinks title="Trips by region" links={footerNav.regions} />
-        <FooterLinks title="Company" links={footerNav.company} />
+        <FooterLinks title="Company" links={companyLinks} />
 
         <div>
           <p className="eyebrow text-light/50!">Talk to us</p>
           <address className="mt-4 space-y-3 not-italic text-light/85">
             <p>
-              <a href={site.phoneHref} className="font-mono hover:text-secondary">
-                {site.phone}
+              <a href={contact.phoneHref} className="font-mono hover:text-secondary">
+                {contact.phone}
               </a>
             </p>
             <p>
-              <a href={site.whatsappHref} className="hover:text-secondary" rel="noopener" target="_blank">
+              <a href={contact.whatsappHref} className="hover:text-secondary" rel="noopener" target="_blank">
                 WhatsApp chat
               </a>
             </p>
             <p>
-              <a href={`mailto:${site.email}`} className="break-all hover:text-secondary">
-                {site.email}
+              <a href={`mailto:${contact.email}`} className="break-all hover:text-secondary">
+                {contact.email}
               </a>
             </p>
-            <p className="text-sm text-light/60">{site.address.full}</p>
+            <p className="text-sm text-light/60">{contact.address.full}</p>
           </address>
         </div>
       </div>

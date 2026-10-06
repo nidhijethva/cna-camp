@@ -1,13 +1,15 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { CloseIcon, MenuIcon } from "@/components/ui/icons";
-import { enquireHref, type NavItem } from "@/content/site";
+import { enquireHref, isNavActive, type NavItem } from "@/content/site";
 
 export function MobileNav({ items }: { items: NavItem[] }) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
+  const pathname = usePathname();
 
   useEffect(() => {
     if (!open) return;
@@ -46,13 +48,13 @@ export function MobileNav({ items }: { items: NavItem[] }) {
         <ul className="wrap py-3">
           {items.map((item) => (
             <li key={item.href} className="border-b border-line last:border-0">
-              <Link href={item.href} className="block py-3 text-lg font-bold">
+              <Link href={item.href} className={`block py-3 text-lg font-bold ${isNavActive(item, pathname) ? "text-primary" : ""}`}>
                 {item.label}
               </Link>
               {item.children && (
-                <div className="flex flex-wrap gap-2 pb-3">
+                <div className="grid grid-cols-2 gap-x-4 pb-3">
                   {item.children.map((c) => (
-                    <Link key={c.href} href={c.href} className="tag py-2 text-muted">
+                    <Link key={c.href} href={c.href} className="py-2 text-[15px] text-muted hover:text-primary">
                       {c.label}
                     </Link>
                   ))}

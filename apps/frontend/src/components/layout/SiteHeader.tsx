@@ -1,10 +1,12 @@
 import Image from "next/image";
 import Link from "next/link";
 import { enquireHref, FOUNDED_YEAR, mainNav, site } from "@/content/site";
+import { getSiteSettings } from "@/lib/content";
 import { DesktopNav } from "./DesktopNav";
 import { MobileNav } from "./MobileNav";
 
-export function SiteHeader() {
+export async function SiteHeader() {
+  const contact = await getSiteSettings();
   return (
     <>
       <div className="bg-dark text-light/85">
@@ -20,15 +22,15 @@ export function SiteHeader() {
             <Image src="/img/logo.png" alt="" width={48} height={48} className="h-12 w-12" />
             <span className="leading-none">
               <span className="display block text-[19px]">{site.name}</span>
-              <span className="font-mono text-[10.5px] uppercase tracking-[.1em] text-muted">Rajkot · Since {FOUNDED_YEAR}</span>
+              <span className="font-mono text-[10.5px] uppercase tracking-[.1em] text-muted">Climber Nature Adventure Club</span>
             </span>
           </Link>
 
           <DesktopNav items={mainNav} />
 
           <div className="flex items-center gap-2">
-            <a href={site.phoneHref} className="hidden whitespace-nowrap font-mono text-[13px] 2xl:block">
-              {site.phone}
+            <a href={contact.phoneHref} className="hidden whitespace-nowrap font-mono text-[13px] 2xl:block">
+              {contact.phone}
             </a>
             <Link href={enquireHref()} className="btn btn-primary hidden py-3! sm:inline-flex">
               Enquire

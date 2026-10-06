@@ -9,6 +9,7 @@
   --color-primary: #cf4510;
   --color-primary-hover: #b23a0b;
   --color-primary-ring: #e8541c;
+  --color-primary-soft: #fff4ee;
   --color-secondary: #ffb627;
   --color-dark: #141414;
   --color-dark-soft: #2a2a28;
@@ -19,6 +20,9 @@
   --color-light: #fff;
   --color-whatsapp: #1fa855;
   --color-whatsapp-dark: #168a45;
+  --color-success: #168a45;
+  --color-live: #3fb36b;
+  --color-live-light: #7ee2a4;
 
   --shadow-*: initial;
   --shadow-card: 0 18px 40px color-mix(in srgb, var(--color-black) 8%, transparent);
@@ -75,6 +79,9 @@
     outline: 3px solid var(--color-primary-ring);
     outline-offset: 3px;
   }
+  a {
+    text-underline-offset: 3px;
+  }
   ::selection {
     background: var(--color-secondary);
     color: var(--color-dark);
@@ -121,6 +128,40 @@
   .h-section { font-size: clamp(32px, 4.2vw, 48px); }
   .h-sub { font-size: clamp(26px, 2.8vw, 32px); }
   .h-card { font-size: 21px; font-weight: 700; }
+
+  /* Long-form text written in the admin's rich-text editor (blog posts). */
+  .rich-text {
+    font-size: 18px;
+    line-height: 1.75;
+    > * + * { margin-top: 1.1em; }
+    h2, h3, h4 { font-family: var(--font-display); font-weight: 400; line-height: 1; margin-top: 1.6em; }
+    h2 { font-size: clamp(30px, 3.4vw, 38px); }
+    h3 { font-size: clamp(24px, 2.6vw, 28px); }
+    h4 { font-size: 22px; }
+    a { color: var(--color-primary); font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
+    a:hover { color: var(--color-primary-hover); }
+    ul, ol { padding-left: 1.4em; }
+    ul { list-style: disc; }
+    ol { list-style: decimal; }
+    li + li { margin-top: 0.4em; }
+    li::marker { color: var(--color-primary); }
+    blockquote { border-left: 3px solid var(--color-secondary); padding-left: 1.1em; font-style: italic; color: var(--color-muted); }
+    hr { border: 0; border-top: 1px solid var(--color-line); margin-block: 2em; }
+    img { width: 100%; height: auto; border-radius: var(--radius-card); }
+    strong { font-weight: 700; }
+  }
+
+  .lead {
+    font-size: 17px;
+    line-height: 1.65;
+    color: var(--color-muted);
+    @media (width >= 40rem) {
+      font-size: 18px;
+    }
+  }
+  .kenburns img {
+    animation: var(--animate-kenburns);
+  }
 
   .eyebrow {
     font-family: var(--font-mono);
@@ -204,6 +245,21 @@
     background-image: linear-gradient(90deg, var(--color-line) 50%, transparent 50%);
     background-size: 14px 2px;
     background-repeat: repeat-x;
+  }
+
+  /* Contour-line background for light sections; the SVG is a mask so its colour comes from a token. */
+  .topo {
+    position: relative;
+    isolation: isolate;
+  }
+  .topo::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background-color: var(--color-line);
+    mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240' viewBox='0 0 240 240'%3E%3Cg fill='none' stroke='black' stroke-width='1'%3E%3Cpath d='M-20 60c40-30 80 10 120-10s70-40 160-10'/%3E%3Cpath d='M-20 90c40-30 90 15 130-5s70-35 150-5'/%3E%3Cpath d='M-20 120c50-25 90 20 130 0s80-30 150 0'/%3E%3Cpath d='M-20 150c45-20 95 25 135 5s75-25 145 5'/%3E%3Cpath d='M-20 180c50-20 100 25 140 5s70-20 140 5'/%3E%3C/g%3E%3C/svg%3E");
+    mask-size: 240px 240px;
   }
 
   /* Uses `translate`, not `transform`, so it doesn't conflict with .reveal. */

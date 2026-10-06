@@ -1,7 +1,8 @@
-import type { RegionSlug } from "@/types/content";
+import type { Campus, RegionSlug } from "@/types/content";
 
 export const FOUNDED_YEAR = 1997;
 
+/** Fixed identity. Contact details and numbers are edited in the admin (Site settings). */
 export const site = {
   name: "CNA Camp",
   legalName: "Climber Nature Adventure Club",
@@ -13,24 +14,6 @@ export const site = {
     registration: "E-5718/2000",
   },
   coordinates: "N 22.30° · E 70.80°",
-  phone: "+91 70463 61009",
-  phoneHref: "tel:+917046361009",
-  whatsappHref:
-    "https://wa.me/917046361009?text=Hi%20CNA%2C%20I%20want%20to%20know%20about%20your%20trips",
-  email: "nikunjvyash2411@gmail.com",
-  address: {
-    full: '"Maa" 4/7 Vaniyawadi Main Rd, opp. Bolbala Road, near 80 ft Road, Rajkot 360002, Gujarat',
-    street: '"Maa" 4/7 Vaniyawadi Main Rd, opp. Bolbala Road, near 80 ft Road',
-    locality: "Rajkot",
-    region: "Gujarat",
-    postalCode: "360002",
-    country: "IN",
-  },
-  social: [
-    { label: "Instagram", href: "https://www.instagram.com/cnacamp.india/" },
-    { label: "Facebook", href: null },
-    { label: "YouTube", href: null },
-  ],
 } as const;
 
 /** First camp: December 1997, so a year is only completed each December. */
@@ -47,8 +30,7 @@ export const regionOrder: RegionSlug[] = ["gujarat", "across-india", "north-east
 
 export const tripsByRegionHref = (region: RegionSlug) => `/trips?region=${region}`;
 
-export const enquireHref = (tripSlug?: string) =>
-  tripSlug ? `/contact?trip=${encodeURIComponent(tripSlug)}#enquire` : "/contact#enquire";
+export const enquireHref = (tripSlug?: string) => (tripSlug ? `/trips/${tripSlug}#enquire` : "/contact#enquire");
 
 export interface NavItem {
   label: string;
@@ -126,3 +108,52 @@ export const travellerTypes = [
   "Corporate team",
   "Teachers / NGO / club",
 ] as const;
+
+export const campuses: Campus[] = [
+  {
+    slug: "manali",
+    name: "Manali Campus",
+    place: "Vashisht, Manali",
+    state: "Himachal Pradesh",
+    own: "Our own campus",
+    img: "peaks",
+    stay: "Swiss tents & hotel rooms",
+    capacity: "200 people",
+    facilities: ["Attached toilets", "Drinking water", "Meals", "First aid"],
+    activities: ["Trekking", "Rock climbing", "River rafting", "High-altitude camping", "Star gazing"],
+    months: "March to June · October to February (winter & snow)",
+  },
+  {
+    slug: "dwarka",
+    name: "Bet Dwarka Campus",
+    place: "Bet Dwarka",
+    state: "Gujarat",
+    own: "Partner campus",
+    img: "stock/campus-dwarka",
+    stay: "Dorm, guest house & tents",
+    capacity: "100 people",
+    facilities: ["Toilets", "Drinking water", "Generator backup"],
+    activities: ["Marine walk", "Bird watching", "Star gazing", "Hiking", "EVS introduction"],
+    months: "October to March",
+  },
+  {
+    slug: "hingolgadh",
+    name: "Hingolgadh Camp",
+    place: "Hingolgadh, Jasdan, Rajkot",
+    state: "Gujarat",
+    own: "Camp site we set up for each batch",
+    img: "stock/campus-hingolgadh",
+    stay: "Tents & dorm",
+    capacity: null,
+    facilities: ["Toilets", "Drinking water", "Generator backup"],
+    activities: ["Bird watching", "Star gazing", "Hiking", "EVS introduction"],
+    months: "All seasons",
+  },
+];
+
+/** Top-level menu item for a path: its own page, sub-pages, or any of its dropdown links. */
+export function isNavActive(item: NavItem, pathname: string) {
+  const own = (href: string) => href.split(/[?#]/)[0];
+  if (pathname === own(item.href) || pathname.startsWith(`${own(item.href)}/`)) return true;
+  return Boolean(item.children?.some((c) => own(c.href) !== "/" && own(c.href) === pathname));
+}
