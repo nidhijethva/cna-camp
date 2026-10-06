@@ -1,6 +1,7 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { mongooseAdapter } from "@payloadcms/db-mongodb";
+import { nodemailerAdapter } from "@payloadcms/email-nodemailer";
 import { lexicalEditor } from "@payloadcms/richtext-lexical";
 import { buildConfig } from "payload";
 import sharp from "sharp";
@@ -39,6 +40,22 @@ function databaseUrl() {
   return `mongodb+srv://${auth}@${requireEnv("MONGODB_HOST")}/?${options}`;
 }
 
+/** Without SMTP_HOST, Payload only logs outgoing mail to the console (fine for local dev). */
+function emailAdapter() {
+  if (!process.env.SMTP_HOST) return undefined;
+  const port = Number(process.env.SMTP_PORT || 587);
+  return nodemailerAdapter({
+    defaultFromAddress: requireEnv("EMAIL_FROM_ADDRESS"),
+    defaultFromName: process.env.EMAIL_FROM_NAME || "CNA Camp",
+    transportOptions: {
+      host: process.env.SMTP_HOST,
+      port,
+      secure: port === 465,
+      auth: { user: requireEnv("SMTP_USER"), pass: requireEnv("SMTP_PASS") },
+    },
+  });
+}
+
 const siteUrl = requireEnv("NEXT_PUBLIC_SITE_URL").replace(/\/$/, "");
 
 export default buildConfig({
@@ -51,13 +68,20 @@ export default buildConfig({
     user: Users.slug,
     importMap: { baseDir: path.resolve(dirname) },
     meta: { titleSuffix: " · CNA Camp admin", icons: [{ rel: "icon", type: "image/png", url: "/icon.png" }] },
+    components: {
+      graphics: {
+        Logo: "@/components/admin/AdminLogo",
+        Icon: "@/components/admin/AdminIcon",
+      },
+    },
   },
   collections: [Trips, Batches, Posts, Reviews, Faqs, Media, Enquiries, Users],
   globals: [HomePage, SiteSettings],
   editor: lexicalEditor(),
+  email: emailAdapter(),
   db: mongooseAdapter({
     url: databaseUrl(),
-    connectOptions: { dbName: process.env.MONGODB_DB ?? "cnacamp" },
+    connectOptions: { dbName: process.env.MONGODB_DB || "cnacamp" },
   }),
   graphQL: { disable: true },
   upload: { limits: { fileSize: 10 * 1024 * 1024 } },
