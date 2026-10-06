@@ -23,3 +23,6 @@ Thumbs.db
 
 # Old separate repo (github.com/nidhijethva/cta-project), not part of this project
 cta-project/
+
+# Reference material (theme source zip), not project code
+old-data-zips/
