@@ -5,6 +5,7 @@ import { SiteFooter } from "@/components/layout/SiteFooter";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { FOUNDED_YEAR, site } from "@/content/site";
+import { getSiteSettings, type SiteSettings } from "@/lib/content";
 import { absoluteUrl, isIndexable, siteUrl } from "@/lib/seo";
 import { themeColors } from "@/lib/theme";
 import "./globals.css";
@@ -36,7 +37,7 @@ export const viewport: Viewport = {
   themeColor: themeColors.dark,
 };
 
-const organizationLd = {
+const organizationLd = (contact: SiteSettings) => ({
   "@context": "https://schema.org",
   "@type": "TravelAgency",
   "@id": absoluteUrl("/#organization"),
@@ -47,22 +48,23 @@ const organizationLd = {
   image: absoluteUrl("/img/valley-wide.jpg"),
   description: site.description,
   foundingDate: String(FOUNDED_YEAR),
-  telephone: site.phoneHref.replace("tel:", ""),
-  email: site.email,
+  telephone: contact.phoneHref.replace("tel:", ""),
+  email: contact.email,
   address: {
     "@type": "PostalAddress",
-    streetAddress: site.address.street,
-    addressLocality: site.address.locality,
-    addressRegion: site.address.region,
-    postalCode: site.address.postalCode,
-    addressCountry: site.address.country,
+    streetAddress: contact.address.street,
+    addressLocality: contact.address.locality,
+    addressRegion: contact.address.region,
+    postalCode: contact.address.postalCode,
+    addressCountry: contact.address.country,
   },
   areaServed: "IN",
-  sameAs: site.social.flatMap((s) => (s.href ? [s.href] : [])),
+  sameAs: contact.social.flatMap((s) => (s.href ? [s.href] : [])),
   parentOrganization: { "@type": "NGO", name: site.trust.name },
-};
+});
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  const contact = await getSiteSettings();
   return (
     <html lang="en-IN" className={`${heading.variable} ${body.variable}`}>
       <body className="min-h-screen pb-16 lg:pb-0">
@@ -76,7 +78,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <main id="main">{children}</main>
         <SiteFooter />
         <ContactShortcuts />
-        <JsonLd data={organizationLd} />
+        <JsonLd data={organizationLd(contact)} />
       </body>
     </html>
   );

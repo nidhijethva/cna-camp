@@ -3,11 +3,17 @@ import { CountUp } from "@/components/ui/CountUp";
 import { StatIcon, type StatIconName } from "@/components/ui/icons";
 import { FOUNDED_YEAR, yearsActive } from "@/content/site";
 
-export function JourneyStats({ tripCount }: { tripCount: number }) {
+interface JourneyStatsProps {
+  tripCount: number;
+  /** Edited in Site settings → Numbers. */
+  counts: { campers: string; camps: string };
+}
+
+export function JourneyStats({ tripCount, counts }: JourneyStatsProps) {
   const stats: { icon: StatIconName; value: string; label: string }[] = [
     { icon: "mountain", value: `${yearsActive()}+`, label: "Years of camps" },
-    { icon: "bolt", value: "1,000+", label: "Camps & treks run" },
-    { icon: "people", value: "1,00,000+", label: "Campers taken outdoors" },
+    { icon: "bolt", value: counts.camps, label: "Camps & treks run" },
+    { icon: "people", value: counts.campers, label: "Campers taken outdoors" },
     { icon: "pin", value: String(tripCount), label: "Treks, camps & nature trails" },
   ];
 
@@ -23,7 +29,7 @@ export function JourneyStats({ tripCount }: { tripCount: number }) {
           Trusted by campers across Gujarat for nearly 30 years
         </h2>
         <p className="mx-auto mt-4 max-w-2xl text-[17px] text-light/75">
-          From one marine camp in {FOUNDED_YEAR} to 1,000+ camps across India and Nepal. Here is CNA in numbers.
+          From one marine camp in {FOUNDED_YEAR} to {counts.camps} camps across India and Nepal. Here is CNA in numbers.
         </p>
         <ul className="mt-12 grid grid-cols-2 gap-4 lg:grid-cols-4">
           {stats.map((s) => (

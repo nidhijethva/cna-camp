@@ -14,25 +14,43 @@ import { TripSearch } from "@/components/home/TripSearch";
 import { UpcomingBatches } from "@/components/home/UpcomingBatches";
 import { WhyCna } from "@/components/home/WhyCna";
 import { JsonLd } from "@/components/seo/JsonLd";
-import { homeFaqs } from "@/content/home";
 import { site } from "@/content/site";
-import { getPopularTrips, getRegionTripCounts, getTripIndex, getUpcomingBatches } from "@/lib/content";
+import {
+  getFeaturedTrips,
+  getHome,
+  getHomeFaqs,
+  getRegionTripCounts,
+  getReviews,
+  getSiteSettings,
+  getTrips,
+  getUpcomingBatches,
+} from "@/lib/content";
+import { photoSrc } from "@/lib/photos";
 import { absoluteUrl } from "@/lib/seo";
 
 // Re-render hourly so past batches drop off the list.
 export const revalidate = 3600;
 
-export const metadata: Metadata = {
-  title: { absolute: `${site.name} | ${site.shortTagline}` },
-  alternates: { canonical: "/" },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { seo } = await getHome();
+  return {
+    title: { absolute: seo.title ?? `${site.name} | ${site.shortTagline}` },
+    description: seo.description ?? undefined,
+    alternates: { canonical: "/" },
+    openGraph: seo.image ? { images: [{ url: photoSrc(seo.image), alt: seo.image.alt }] } : undefined,
+  };
+}
 
 export default async function HomePage() {
-  const [popular, batches, tripIndex, regionCounts] = await Promise.all([
-    getPopularTrips(),
+  const [home, popular, batches, allTrips, regionCounts, faqs, reviews, settings] = await Promise.all([
+    getHome(),
+    getFeaturedTrips(),
     getUpcomingBatches(5),
-    getTripIndex(),
+    getTrips(),
     getRegionTripCounts(),
+    getHomeFaqs(),
+    getReviews(),
+    getSiteSettings(),
   ]);
 
   const websiteLd = {
@@ -57,20 +75,20 @@ export default async function HomePage() {
 
   return (
     <>
-      <Hero />
+      <Hero content={home.hero} />
       <TripSearch />
-      <StorySection />
+      <StorySection content={home.story} />
       <UpcomingBatches batches={batches} />
       <PopularTrips trips={popular} />
-      <HolidayGrid />
-      <JourneyStats tripCount={tripIndex.length} />
-      <Destinations counts={regionCounts} />
+      <HolidayGrid content={home.holidays} />
+      <JourneyStats tripCount={allTrips.length} counts={settings.stats} />
+      <Destinations content={home.destinations} counts={regionCounts} />
       <OlympiadBanner />
-      <Audiences />
-      <WhyCna />
-      <Reviews />
-      <Filmstrip />
-      <FaqEnquiry faqs={homeFaqs} trips={tripIndex.map(({ slug, name }) => ({ slug, name }))} />
+      <Audiences content={home.audiences} />
+      <WhyCna content={home.why} />
+      <Reviews reviews={reviews} />
+      <Filmstrip content={home.gallery} />
+      <FaqEnquiry faqs={faqs} />
       <JsonLd data={websiteLd} />
       <JsonLd data={popularLd} />
     </>

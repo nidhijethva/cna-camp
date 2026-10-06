@@ -1,19 +1,18 @@
-import Image from "next/image";
 import Link from "next/link";
-import { heroImage } from "@/content/home";
+import { Photo } from "@/components/media/Photo";
 import { FOUNDED_YEAR, site } from "@/content/site";
+import type { HomeContent } from "@/lib/content";
 
-export function Hero() {
+export function Hero({ content }: { content: HomeContent["hero"] }) {
+  const lines = content.headingLines;
   return (
     <section className="relative isolate overflow-hidden bg-dark text-light" aria-labelledby="hero-title">
       <div className="absolute inset-0 -z-10 overflow-hidden">
-        <Image
-          src={heroImage.src}
-          alt={heroImage.alt}
-          fill
+        <Photo
+          img={content.image}
           preload
           sizes="100vw"
-          className="animate-kenburns object-cover"
+          className="animate-kenburns"
         />
       </div>
       <div className="absolute inset-0 -z-10 bg-linear-to-b from-dark/20 via-dark/30 via-40% to-dark/92" />
@@ -24,31 +23,29 @@ export function Hero() {
           {site.coordinates} — Rajkot · Est. {FOUNDED_YEAR}
         </p>
         <h1 id="hero-title" className="h-hero mt-5 max-w-4xl">
-          Real trails.
-          <br />
-          Real people.
-          <br />
-          <span className="text-secondary">Since {FOUNDED_YEAR}.</span>
+          {lines.map((line, i) =>
+            i === lines.length - 1 ? (
+              <span key={i} className="text-secondary">
+                {line}
+              </span>
+            ) : (
+              <span key={i}>
+                {line}
+                <br />
+              </span>
+            ),
+          )}
         </h1>
-        <p className="mt-6 max-w-xl text-[18px] leading-relaxed text-light/85">
-          Eco-tourism treks, camps and nature trails from Gujarat to the Himalaya. For schools, colleges, families,
-          friends, girls-only groups and solo travellers.
-        </p>
+        <p className="mt-6 max-w-xl text-[18px] leading-relaxed text-light/85">{content.intro}</p>
         <div className="mt-8 flex flex-wrap gap-3">
           <Link href="/trips" className="btn btn-primary">
             Explore trips →
           </Link>
-          <a href="#story" className="btn btn-outline-light">
-            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-[10px]" aria-hidden="true">
-              ▶
-            </span>
-            Watch our story
-          </a>
         </div>
         <ul className="mt-8 flex flex-wrap gap-x-6 gap-y-2 font-mono text-[12px] uppercase tracking-[.1em] text-light/75">
-          <li>★ 1,00,000+ campers</li>
-          <li>★ 1,000+ camps</li>
-          <li>★ Backed by a registered trust</li>
+          {content.highlights.map((h) => (
+            <li key={h}>★ {h}</li>
+          ))}
         </ul>
       </div>
     </section>
